@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package bloodlink.stock.v1;
+
+option java_multiple_files = true;
+option java_package = "tn.bloodlink.stock.grpc";
+
+service StockService {
+  // Appel unaire : une requête, une réponse
+  rpc GetStock (GetStockRequest) returns (StockLevel);
+
+  // Server streaming : une requête, plusieurs réponses
+  rpc StreamStockLevels (StreamStockRequest) returns (stream StockLevel);
+
+  // Appel unaire : modifie le stock (delta positif ou négatif)
+  rpc UpdateStock (UpdateStockRequest) returns (StockLevel);
+}
+
+message GetStockRequest {
+  string blood_type = 1;
+}
+
+message StreamStockRequest {
+  int32 interval_seconds = 1;
+  int32 max_updates = 2;      // 0 = sans fin
+}
+
+message UpdateStockRequest {
+  string blood_type = 1;
+  int32 delta = 2;
+}
+
+message StockLevel {
+  string blood_type = 1;
+  int32 units = 2;
+  int32 threshold = 3;
+  bool urgent = 4;
+  int64 updated_at_epoch = 5;
+}
