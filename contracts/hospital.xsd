@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://bloodlink.tn/hospital"
+    xmlns:tns="http://bloodlink.tn/hospital"
+    elementFormDefault="qualified">
+
+    <!-- Type groupe sanguin -->
+    <xs:simpleType name="BloodType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="(A|B|AB|O)(\+|-)"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Type statut de la demande -->
+    <xs:simpleType name="RequestStatus">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="APPROVED"/>
+            <xs:enumeration value="REJECTED"/>
+            <xs:enumeration value="PENDING"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Opération 1 : RequestBloodUnits -->
+
+    <xs:element name="RequestBloodUnitsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="hospitalName" type="xs:string"/>
+                <xs:element name="bloodType" type="tns:BloodType"/>
+                <xs:element name="units" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="RequestBloodUnitsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="requestId" type="xs:long"/>
+                <xs:element name="status" type="tns:RequestStatus"/>
+                <xs:element name="message" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Opération 2 : CheckRequestStatus -->
+
+    <xs:element name="CheckRequestStatusRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="requestId" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CheckRequestStatusResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="requestId" type="xs:long"/>
+                <xs:element name="status" type="tns:RequestStatus"/>
+                <xs:element name="bloodType" type="tns:BloodType"/>
+                <xs:element name="units" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
