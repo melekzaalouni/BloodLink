@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://bloodlink.tn/hospital" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://bloodlink.tn/hospital" targetNamespace="http://bloodlink.tn/hospital">
+  <wsdl:types>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://bloodlink.tn/hospital">
+
+    <!-- Type groupe sanguin -->
+    <xs:simpleType name="BloodType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="(A|B|AB|O)(\+|-)"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Type statut de la demande -->
+    <xs:simpleType name="RequestStatus">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="APPROVED"/>
+            <xs:enumeration value="REJECTED"/>
+            <xs:enumeration value="PENDING"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Opération 1 : RequestBloodUnits -->
+
+    <xs:element name="RequestBloodUnitsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="hospitalName" type="xs:string"/>
+                <xs:element name="bloodType" type="tns:BloodType"/>
+                <xs:element name="units" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="RequestBloodUnitsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="requestId" type="xs:long"/>
+                <xs:element name="status" type="tns:RequestStatus"/>
+                <xs:element name="message" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Opération 2 : CheckRequestStatus -->
+
+    <xs:element name="CheckRequestStatusRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="requestId" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="CheckRequestStatusResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="requestId" type="xs:long"/>
+                <xs:element name="status" type="tns:RequestStatus"/>
+                <xs:element name="bloodType" type="tns:BloodType"/>
+                <xs:element name="units" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="CheckRequestStatusResponse">
+    <wsdl:part element="tns:CheckRequestStatusResponse" name="CheckRequestStatusResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="RequestBloodUnitsRequest">
+    <wsdl:part element="tns:RequestBloodUnitsRequest" name="RequestBloodUnitsRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="RequestBloodUnitsResponse">
+    <wsdl:part element="tns:RequestBloodUnitsResponse" name="RequestBloodUnitsResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="CheckRequestStatusRequest">
+    <wsdl:part element="tns:CheckRequestStatusRequest" name="CheckRequestStatusRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="HospitalPort">
+    <wsdl:operation name="CheckRequestStatus">
+      <wsdl:input message="tns:CheckRequestStatusRequest" name="CheckRequestStatusRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:CheckRequestStatusResponse" name="CheckRequestStatusResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RequestBloodUnits">
+      <wsdl:input message="tns:RequestBloodUnitsRequest" name="RequestBloodUnitsRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:RequestBloodUnitsResponse" name="RequestBloodUnitsResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="HospitalPortSoap11" type="tns:HospitalPort">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="CheckRequestStatus">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="CheckRequestStatusRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="CheckRequestStatusResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RequestBloodUnits">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="RequestBloodUnitsRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="RequestBloodUnitsResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="HospitalPortService">
+    <wsdl:port binding="tns:HospitalPortSoap11" name="HospitalPortSoap11">
+      <soap:address location="http://localhost:8083/ws"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
