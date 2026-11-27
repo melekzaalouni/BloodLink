@@ -1,0 +1,25 @@
+
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: donor-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/donor_db}
+    username: ${DB_USER:donor}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      probes:
+        enabled: true
