@@ -1,0 +1,5 @@
+target
+.idea
+.git
+run.log
+*.md
