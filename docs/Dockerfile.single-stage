@@ -1,0 +1,9 @@
+# Version à UN SEUL stage, uniquement pour comparer la taille de l'image dans le rapport.
+# Construction : docker build -f docs/Dockerfile.single-stage -t bloodlink/stock-single ./stock-service
+FROM maven:3.9-eclipse-temurin-17
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B -q clean package -DskipTests
+EXPOSE 9090 8082
+ENTRYPOINT ["java", "-jar", "target/stock-service-1.0.0.jar"]
