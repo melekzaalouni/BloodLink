@@ -1,0 +1,30 @@
+services:
+  stock-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${STOCK_DB_NAME:-stock_db}
+      POSTGRES_USER: ${STOCK_DB_USER:-stock}
+      POSTGRES_PASSWORD: ${STOCK_DB_PASSWORD:-change_me}
+    volumes:
+      - stock-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${STOCK_DB_USER:-stock} -d ${STOCK_DB_NAME:-stock_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  stock-service:
+    build: ./stock-service
+    depends_on:
+      stock-db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://stock-db:5432/${STOCK_DB_NAME:-stock_db}
+      DB_USER: ${STOCK_DB_USER:-stock}
+      DB_PASSWORD: ${STOCK_DB_PASSWORD:-change_me}
+    ports:
+      - "8082:8082"
+      - "9090:9090"
+
+volumes:
+  stock-db-data:
