@@ -1,0 +1,370 @@
+openapi: 3.0.1
+info:
+  title: BloodLink donor API
+  description: "Donors, appointments, urgent needs and blood requests"
+  version: v1
+servers:
+- url: http://localhost:8081
+  description: Generated server url
+paths:
+  /api/v1/donors/{id}:
+    get:
+      tags:
+      - Donors
+      summary: Get a donor by id
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Donor not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+        "200":
+          description: Donor found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+    put:
+      tags:
+      - Donors
+      summary: Update a donor
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DonorRequest"
+        required: true
+      responses:
+        "404":
+          description: Donor not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+        "200":
+          description: Donor updated
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+        "409":
+          description: Email already used
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+        "400":
+          description: Validation failed
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+    delete:
+      tags:
+      - Donors
+      summary: Delete a donor
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Donor not found
+        "204":
+          description: Donor deleted
+  /api/v1/donors:
+    get:
+      tags:
+      - Donors
+      summary: List donors (paginated)
+      operationId: list
+      parameters:
+      - name: pageable
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Pageable"
+      responses:
+        "200":
+          description: Page of donors
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDonorResponse"
+    post:
+      tags:
+      - Donors
+      summary: Create a donor
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DonorRequest"
+        required: true
+      responses:
+        "409":
+          description: Email already used
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+        "201":
+          description: Donor created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+        "400":
+          description: Validation failed
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DonorResponse"
+  /api/v1/donors/{donorId}/appointments:
+    get:
+      tags:
+      - Appointments
+      summary: List a donor's appointments
+      operationId: list_1
+      parameters:
+      - name: donorId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Donor not found
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppointmentResponse"
+        "200":
+          description: List of appointments
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppointmentResponse"
+    post:
+      tags:
+      - Appointments
+      summary: Book a donation appointment for a donor
+      operationId: book
+      parameters:
+      - name: donorId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentRequest"
+        required: true
+      responses:
+        "404":
+          description: Donor not found
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "201":
+          description: Appointment booked
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "400":
+          description: Validation failed
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+        "422":
+          description: Less than 56 days since the last donation (R3)
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AppointmentResponse"
+components:
+  schemas:
+    DonorRequest:
+      required:
+      - bloodType
+      - email
+      - fullName
+      type: object
+      properties:
+        fullName:
+          maxLength: 100
+          minLength: 0
+          type: string
+        email:
+          type: string
+        phone:
+          pattern: "^\\+?[0-9]{8,15}$"
+          type: string
+        bloodType:
+          pattern: "^(A|B|AB|O)[+-]$"
+          type: string
+        lastDonation:
+          type: string
+          format: date
+    DonorResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        bloodType:
+          type: string
+        lastDonation:
+          type: string
+          format: date
+    AppointmentRequest:
+      required:
+      - bankName
+      - scheduledAt
+      type: object
+      properties:
+        bankName:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+    AppointmentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        donorId:
+          type: integer
+          format: int64
+        bankName:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - BOOKED
+          - CANCELLED
+    Pageable:
+      type: object
+      properties:
+        page:
+          minimum: 0
+          type: integer
+          format: int32
+        size:
+          minimum: 1
+          type: integer
+          format: int32
+        sort:
+          type: array
+          items:
+            type: string
+    PageDonorResponse:
+      type: object
+      properties:
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/DonorResponse"
+        number:
+          type: integer
+          format: int32
+        sort:
+          type: array
+          items:
+            $ref: "#/components/schemas/SortObject"
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        paged:
+          type: boolean
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        sort:
+          type: array
+          items:
+            $ref: "#/components/schemas/SortObject"
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        direction:
+          type: string
+        nullHandling:
+          type: string
+        ascending:
+          type: boolean
+        property:
+          type: string
+        ignoreCase:
+          type: boolean
