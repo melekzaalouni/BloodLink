@@ -25,6 +25,33 @@ services:
     ports:
       - "8082:8082"
       - "9090:9090"
+  donor-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DONOR_DB_NAME:-donor_db}
+      POSTGRES_USER: ${DONOR_DB_USER:-donor}
+      POSTGRES_PASSWORD: ${DONOR_DB_PASSWORD:-change_me}
+    volumes:
+      - donor-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DONOR_DB_USER:-donor} -d ${DONOR_DB_NAME:-donor_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  donor-service:
+    build: ./donor-service
+    depends_on:
+      donor-db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://donor-db:5432/${DONOR_DB_NAME:-donor_db}
+      DB_USER: ${DONOR_DB_USER:-donor}
+      DB_PASSWORD: ${DONOR_DB_PASSWORD:-change_me}
+    ports:
+      - "8081:8081"
 
 volumes:
   stock-db-data:
+  donor-db-data:
