@@ -1,7 +1,6 @@
-name: bloodlink
+﻿name: bloodlink
 
 services:
-  # ------------------------- bases de données -------------------------
   hospital-db:
     image: postgres:16-alpine
     environment:
@@ -47,7 +46,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # ------------------------- services métier -------------------------
   stock-service:
     build: ./stock-service
     environment:
@@ -60,7 +58,9 @@ services:
       stock-db:
         condition: service_healthy
     networks: [bloodlink-net]
-    ports: ["9090:9090"]                   # publié pour la démo grpcurl uniquement
+    ports:
+      - "8082:8082"
+      - "9090:9090"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
       interval: 10s
@@ -68,69 +68,36 @@ services:
       retries: 10
       start_period: 40s
 
-  # À DÉCOMMENTER quand le Dockerfile du service existe dans son dossier
-  # (chaque membre te donne son port et ses variables ; ici les valeurs prévues par le guide).
+  donor-service:
+    build: ./donor-service
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://donor-db:5432/${DONOR_DB_NAME}
+      DB_USER: ${DONOR_DB_USER}
+      DB_PASSWORD: ${DONOR_DB_PASSWORD}
+      STOCK_GRPC_ADDRESS: static://stock-service:9090
+      HOSPITAL_URL: http://hospital-service:8083/ws
+    depends_on:
+      donor-db:
+        condition: service_healthy
+      stock-service:
+        condition: service_healthy
+    networks: [bloodlink-net]
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 40s
 
+  # À activer lorsque le service Hospital sera prêt
   # hospital-service:
   #   build: ./hospital-service
-  #   environment:
-  #     SERVER_PORT: 8083
-  #     DB_URL: jdbc:postgresql://hospital-db:5432/${HOSPITAL_DB_NAME}
-  #     DB_USER: ${HOSPITAL_DB_USER}
-  #     DB_PASSWORD: ${HOSPITAL_DB_PASSWORD}
-  #   depends_on:
-  #     hospital-db:
-  #       condition: service_healthy
-  #   networks: [bloodlink-net]
-  #   ports: ["8083:8083"]                 # publié pour la démo SOAP uniquement
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 10
-  #     start_period: 40s
 
-  # donor-service:
-  #   build: ./donor-service
-  #   environment:
-  #     SERVER_PORT: 8081
-  #     DB_URL: jdbc:postgresql://donor-db:5432/${DONOR_DB_NAME}
-  #     DB_USER: ${DONOR_DB_USER}
-  #     DB_PASSWORD: ${DONOR_DB_PASSWORD}
-  #     STOCK_GRPC_ADDRESS: static://stock-service:9090
-  #     HOSPITAL_URL: http://hospital-service:8083/ws
-  #   depends_on:
-  #     donor-db:
-  #       condition: service_healthy
-  #     stock-service:
-  #       condition: service_healthy
-  #     hospital-service:
-  #       condition: service_healthy
-  #   networks: [bloodlink-net]
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 10
-  #     start_period: 40s
-
-  # ------------------------- passerelle -------------------------
   # api-gateway:
   #   build: ./api-gateway
-  #   environment:
-  #     SERVER_PORT: 8080
-  #     DONOR_SERVICE_URL: http://donor-service:8081
-  #   depends_on:
-  #     donor-service:
-  #       condition: service_healthy
-  #   networks: [bloodlink-net]
-  #   ports: ["8080:8080"]                 # la seule entrée publique
-  #   healthcheck:
-  #     test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
-  #     interval: 10s
-  #     timeout: 3s
-  #     retries: 10
-  #     start_period: 30s
 
 networks:
   bloodlink-net:
