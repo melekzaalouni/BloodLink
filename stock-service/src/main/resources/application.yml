@@ -1,0 +1,25 @@
+server:
+  port: ${HTTP_PORT:8082}          # HTTP uniquement pour Actuator (healthcheck Docker)
+
+grpc:
+  server:
+    port: ${GRPC_PORT:9090}
+    reflection-service-enabled: true   # grpcurl découvre les services sans le .proto
+
+spring:
+  application:
+    name: stock-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/stock_db}
+    username: ${DB_USER:stock}
+    password: ${DB_PASSWORD}           # volontairement sans valeur par défaut : aucun secret dans Git
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
