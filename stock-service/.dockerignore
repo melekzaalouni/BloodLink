@@ -1,5 +1,4 @@
-target
-.idea
-.git
-run.log
-*.md
+target/
+.git/
+.idea/
+*.iml
