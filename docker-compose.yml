@@ -1,57 +1,109 @@
+﻿name: bloodlink
+
 services:
+  hospital-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${HOSPITAL_DB_NAME}
+      POSTGRES_USER: ${HOSPITAL_DB_USER}
+      POSTGRES_PASSWORD: ${HOSPITAL_DB_PASSWORD:?copiez .env.example en .env}
+    volumes:
+      - hospital_data:/var/lib/postgresql/data
+    networks: [bloodlink-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${HOSPITAL_DB_USER} -d ${HOSPITAL_DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   stock-db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${STOCK_DB_NAME:-stock_db}
-      POSTGRES_USER: ${STOCK_DB_USER:-stock}
-      POSTGRES_PASSWORD: ${STOCK_DB_PASSWORD:-change_me}
+      POSTGRES_DB: ${STOCK_DB_NAME}
+      POSTGRES_USER: ${STOCK_DB_USER}
+      POSTGRES_PASSWORD: ${STOCK_DB_PASSWORD:?copiez .env.example en .env}
     volumes:
-      - stock-db-data:/var/lib/postgresql/data
+      - stock_data:/var/lib/postgresql/data
+    networks: [bloodlink-net]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${STOCK_DB_USER:-stock} -d ${STOCK_DB_NAME:-stock_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${STOCK_DB_USER} -d ${STOCK_DB_NAME}"]
       interval: 5s
-      timeout: 5s
+      timeout: 3s
+      retries: 10
+
+  donor-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DONOR_DB_NAME}
+      POSTGRES_USER: ${DONOR_DB_USER}
+      POSTGRES_PASSWORD: ${DONOR_DB_PASSWORD:?copiez .env.example en .env}
+    volumes:
+      - donor_data:/var/lib/postgresql/data
+    networks: [bloodlink-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DONOR_DB_USER} -d ${DONOR_DB_NAME}"]
+      interval: 5s
+      timeout: 3s
       retries: 10
 
   stock-service:
     build: ./stock-service
+    environment:
+      HTTP_PORT: 8082
+      GRPC_PORT: 9090
+      DB_URL: jdbc:postgresql://stock-db:5432/${STOCK_DB_NAME}
+      DB_USER: ${STOCK_DB_USER}
+      DB_PASSWORD: ${STOCK_DB_PASSWORD}
     depends_on:
       stock-db:
         condition: service_healthy
-    environment:
-      DB_URL: jdbc:postgresql://stock-db:5432/${STOCK_DB_NAME:-stock_db}
-      DB_USER: ${STOCK_DB_USER:-stock}
-      DB_PASSWORD: ${STOCK_DB_PASSWORD:-change_me}
+    networks: [bloodlink-net]
     ports:
       - "8082:8082"
       - "9090:9090"
-  donor-db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${DONOR_DB_NAME:-donor_db}
-      POSTGRES_USER: ${DONOR_DB_USER:-donor}
-      POSTGRES_PASSWORD: ${DONOR_DB_PASSWORD:-change_me}
-    volumes:
-      - donor-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DONOR_DB_USER:-donor} -d ${DONOR_DB_NAME:-donor_db}"]
-      interval: 5s
-      timeout: 5s
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 3s
       retries: 10
+      start_period: 40s
 
   donor-service:
     build: ./donor-service
+    environment:
+      SERVER_PORT: 8081
+      DB_URL: jdbc:postgresql://donor-db:5432/${DONOR_DB_NAME}
+      DB_USER: ${DONOR_DB_USER}
+      DB_PASSWORD: ${DONOR_DB_PASSWORD}
+      STOCK_GRPC_ADDRESS: static://stock-service:9090
+      HOSPITAL_URL: http://hospital-service:8083/ws
     depends_on:
       donor-db:
         condition: service_healthy
-    environment:
-      SERVER_PORT: 8081
-      DB_URL: jdbc:postgresql://donor-db:5432/${DONOR_DB_NAME:-donor_db}
-      DB_USER: ${DONOR_DB_USER:-donor}
-      DB_PASSWORD: ${DONOR_DB_PASSWORD:-change_me}
+      stock-service:
+        condition: service_healthy
+    networks: [bloodlink-net]
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 40s
+
+  # À activer lorsque le service Hospital sera prêt
+  # hospital-service:
+  #   build: ./hospital-service
+
+  # api-gateway:
+  #   build: ./api-gateway
+
+networks:
+  bloodlink-net:
+    driver: bridge
 
 volumes:
-  stock-db-data:
-  donor-db-data:
+  hospital_data:
+  stock_data:
+  donor_data:
